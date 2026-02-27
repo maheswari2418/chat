@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui";
-import { formatConversationTime } from "@/lib/formattime";
+import { formatMessageTime } from "@/lib/formattime";
 import { cn } from "@/lib/utils";
 import OnlineStatus from "@/components/chat/shared/online-status";
 import UnreadBadge from "@/components/chat/shared/unread";
@@ -60,7 +60,7 @@ export default function ConversationItem({
           <h3 className="font-semibold truncate">{displayName}</h3>
           {conversation.lastMessage && (
             <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-              {formatConversationTime(conversation.lastMessageAt)}
+              {formatMessageTime(conversation.lastMessageAt)}
             </span>
           )}
         </div>

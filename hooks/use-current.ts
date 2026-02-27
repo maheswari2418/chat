@@ -4,5 +4,5 @@ import { useAuth } from "@/lib/auth-context";
 
 export function useCurrentUser() {
   const { userName } = useAuth();
-  return useQuery(api.users.getUserByName, userName ? { name: userName } : "skip");
+  return useQuery(api.users.getUserByClerkId, userName ? { clerkId: userName } : "skip");
 }

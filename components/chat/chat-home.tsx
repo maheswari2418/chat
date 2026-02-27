@@ -1,198 +1,164 @@
 "use client";
 
-import { useAuth } from "@/lib/auth-context";
-import { useQuery, useMutation } from "convex/react";
+import { useUser, UserButton } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui";
-import { ScrollArea } from "@/components/ui";
-import { Loader2, UserPlus, LogOut, Users, MessageSquare } from "lucide-react";
-import OnlineStatus from "./shared/online-status";
-import AddFriendDialog from "./sidebar/add";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, MessageSquare, Users } from "lucide-react";
+import OnlineIndicator from "@/components/chat/TypingIndicator";
 
 export default function ChatHome() {
-  const { userName, displayName, logout } = useAuth();
   const router = useRouter();
-  const users = useQuery(api.users.getAllUsers, userName ? { currentUserName: userName } : "skip");
-  const getOrCreateConversation = useMutation(api.conversations.getOrCreateConversation);
-  const setOnlineStatus = useMutation(api.users.setOnlineStatus);
-  
+  const { user, isLoaded } = useUser();
   const [isCreating, setIsCreating] = useState<string | null>(null);
-  const [showAddFriend, setShowAddFriend] = useState(false);
 
-  // Set user online
+  const updatePresence = useMutation(api.presence.updatePresence);
+  const getOrCreateConversation = useMutation(api.conversations.getOrCreateConversation);
+
+  const users = useQuery(
+    api.users.getAllUsers,
+    user ? { currentClerkId: user.id } : "skip"
+  );
+
   useEffect(() => {
-    if (userName) {
-      setOnlineStatus({ userName, isOnline: true });
+    if (!isLoaded || !user) return;
 
-      const handleBeforeUnload = () => {
-        setOnlineStatus({ userName, isOnline: false });
-      };
+    updatePresence({ userId: user.id, isOnline: true });
 
-      window.addEventListener("beforeunload", handleBeforeUnload);
+    const handleUnload = () => {
+      updatePresence({ userId: user.id, isOnline: false });
+    };
+    window.addEventListener("beforeunload", handleUnload);
 
-      const interval = setInterval(() => {
-        setOnlineStatus({ userName, isOnline: true });
-      }, 30000);
+    const interval = setInterval(() => {
+      updatePresence({ userId: user.id, isOnline: true });
+    }, 20000);
 
-      return () => {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-        clearInterval(interval);
-        setOnlineStatus({ userName, isOnline: false });
-      };
-    }
-  }, [userName, setOnlineStatus]);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      clearInterval(interval);
+      updatePresence({ userId: user.id, isOnline: false });
+    };
+  }, [isLoaded, user, updatePresence]);
 
-  const handleUserClick = async (otherUserName: string) => {
-    if (!userName) return;
-    
-    setIsCreating(otherUserName);
+  const groupedUsers = useMemo(() => {
+    const list = users ?? [];
+    return list.reduce<Record<string, typeof list>>((acc, u) => {
+      const key = u.name?.[0]?.toUpperCase() || "#";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(u);
+      return acc;
+    }, {});
+  }, [users]);
+
+  const letters = useMemo(() => Object.keys(groupedUsers).sort(), [groupedUsers]);
+
+  if (!isLoaded) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#111b21]">
+        <div className="w-8 h-8 border-2 border-[#00a884] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    router.push("/sign-in");
+    return null;
+  }
+
+  const handleUserClick = async (otherUserId: string) => {
+    setIsCreating(otherUserId);
     try {
       const conversationId = await getOrCreateConversation({
-        currentUserName: userName,
-        otherUserName,
+        currentUserId: user.id,
+        otherUserId,
       });
       router.push(`/chat/${conversationId}`);
-    } catch (error) {
-      console.error("Error creating conversation:", error);
-      alert("Failed to start conversation");
     } finally {
       setIsCreating(null);
     }
   };
 
-  const handleLogout = () => {
-    if (userName) {
-      setOnlineStatus({ userName, isOnline: false });
-    }
-    logout();
-    router.push("/register");
-  };
-
-  // Group users by first letter
-  const groupedUsers = users?.reduce((acc, user) => {
-    const firstLetter = user.displayName[0]?.toUpperCase() || "#";
-    if (!acc[firstLetter]) {
-      acc[firstLetter] = [];
-    }
-    acc[firstLetter].push(user);
-    return acc;
-  }, {} as Record<string, typeof users>);
-
-  const letters = groupedUsers ? Object.keys(groupedUsers).sort() : [];
-
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-full md:w-96 border-r bg-white flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
-              <p className="text-sm text-gray-600">Hi, {displayName}!</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
-              <LogOut className="h-5 w-5" />
-            </Button>
+    <div className="flex h-screen bg-[#111b21]">
+      <div className="w-full md:w-[420px] border-r border-[#2a3942] flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 bg-[#202c33]">
+          <div className="flex items-center gap-3">
+            <UserButton appearance={{ elements: { avatarBox: "w-10 h-10" } }} />
+            <span className="text-[#e9edef] font-medium text-sm truncate max-w-[220px]">
+              {user.fullName ?? user.username ?? "You"}
+            </span>
           </div>
-
-          <Button onClick={() => setShowAddFriend(true)} className="w-full" size="lg">
-            <UserPlus className="h-5 w-5 mr-2" />
-            Add Friend
-          </Button>
         </div>
 
-        {/* User List */}
-        <ScrollArea className="flex-1 scrollbar-thin">
-          {users === undefined ? (
-            <div className="p-8 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Loading users...</p>
-            </div>
-          ) : users.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">No friends yet</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Add your first friend to start chatting!
-              </p>
-              <Button onClick={() => setShowAddFriend(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Friend
-              </Button>
-            </div>
-          ) : (
-            <div className="pb-4">
-              {letters.map((letter) => (
-                <div key={letter}>
-                  {/* Letter Header */}
-                  <div className="sticky top-0 bg-gray-100 px-4 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider z-10">
-                    {letter}
-                  </div>
-
-                  {/* Users */}
-                  <div className="divide-y divide-gray-100">
-                    {groupedUsers[letter].map((user) => (
-                      <button
-                        key={user._id}
-                        onClick={() => handleUserClick(user.name)}
-                        disabled={isCreating === user.name}
-                        className="w-full p-4 flex items-center gap-3 hover:bg-gray-50 transition text-left disabled:opacity-50"
-                      >
-                        <div className="relative flex-shrink-0">
-                          <Avatar>
-                            <AvatarFallback className="bg-blue-100 text-blue-700">
-                              {user.displayName.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <OnlineStatus isOnline={user.isOnline} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
-                            {user.displayName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {user.isOnline ? "Online" : "Offline"}
-                          </p>
-                        </div>
-                        {isCreating === user.name && (
-                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+        {users === undefined ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-[#00a884]" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <Users className="w-12 h-12 text-[#2a3942] mb-4" />
+            <p className="text-[#8696a0] text-sm font-medium">No other users yet</p>
+            <p className="text-[#8696a0] text-xs mt-1">
+              Ask someone else to sign in, then start chatting.
+            </p>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            {letters.map((letter) => (
+              <div key={letter}>
+                <div className="sticky top-0 bg-[#111b21] px-4 py-2 text-[11px] font-semibold text-[#8696a0] uppercase tracking-widest">
+                  {letter}
                 </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+                {groupedUsers[letter].map((u) => (
+                  <button
+                    key={u._id}
+                    onClick={() => handleUserClick(u.clerkId)}
+                    disabled={isCreating === u.clerkId}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#2a3942] transition-colors text-left disabled:opacity-50"
+                  >
+                    <div className="relative flex-shrink-0">
+                      {u.imageUrl ? (
+                        <img
+                          src={u.imageUrl}
+                          alt={u.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-[#6b7c85] flex items-center justify-center text-white font-semibold text-lg">
+                          {u.name?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      <OnlineIndicator userId={u.clerkId} small />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#e9edef] font-medium text-sm truncate">
+                        {u.name}
+                      </p>
+                    </div>
+                    {isCreating === u.clerkId && (
+                      <Loader2 className="w-4 h-4 animate-spin text-[#00a884]" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Empty state */}
-      <div className="hidden md:flex flex-1 items-center justify-center">
+      <div className="hidden md:flex flex-1 items-center justify-center bg-[#0b141a]">
         <div className="text-center">
-          <MessageSquare className="h-20 w-20 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-            Select a friend
+          <MessageSquare className="w-20 h-20 text-[#2a3942] mx-auto mb-4" />
+          <h2 className="text-[#e9edef] text-2xl font-light mb-2">
+            Select a person
           </h2>
-          <p className="text-gray-500">
-            Click on a friend to start chatting
+          <p className="text-[#8696a0] text-sm">
+            Choose someone from the list to start chatting.
           </p>
         </div>
       </div>
-
-      {/* Add Friend Dialog */}
-      {showAddFriend && (
-        <AddFriendDialog
-          currentUserName={userName!}
-          onClose={() => setShowAddFriend(false)}
-        />
-      )}
     </div>
   );
 }

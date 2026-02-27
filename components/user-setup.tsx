@@ -13,7 +13,7 @@ interface UserSetupProps {
 
 export default function UserSetup({ onComplete }: UserSetupProps) {
   const { user: clerkUser } = useUser();
-  const createUser = useMutation(api.users.getOrCreateCurrentUser);
+  const upsertUser = useMutation(api.users.upsertUser);
   
   const [name, setName] = useState(clerkUser?.fullName || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +31,13 @@ export default function UserSetup({ onComplete }: UserSetupProps) {
     setError("");
 
     try {
-      await createUser();
+      if (!clerkUser) throw new Error("Not signed in");
+      await upsertUser({
+        clerkId: clerkUser.id,
+        name: name.trim(),
+        email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
+        imageUrl: clerkUser.imageUrl,
+      });
       onComplete();
     } catch (err) {
       console.error("Error creating user:", err);

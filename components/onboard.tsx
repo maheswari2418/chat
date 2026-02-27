@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -12,8 +12,11 @@ interface OnboardingCheckerProps {
 }
 
 export default function OnboardingChecker({ children }: OnboardingCheckerProps) {
-  const { isLoaded: clerkLoaded, isSignedIn } = useUser();
-  const currentUser = useQuery(api.users.getCurrentUser);
+  const { user, isLoaded: clerkLoaded, isSignedIn } = useUser();
+  const currentUser = useQuery(
+    api.users.getUserByClerkId,
+    clerkLoaded && isSignedIn && user ? { clerkId: user.id } : "skip"
+  );
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 

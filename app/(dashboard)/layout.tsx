@@ -26,9 +26,7 @@ export default function ChatLayout({
     upsertUser({
       clerkId: user.id,
       name: user.fullName ?? user.username ?? "Unknown",
-      ...(user.emailAddresses[0]?.emailAddress
-        ? { email: user.emailAddresses[0].emailAddress }
-        : {}),
+      email: user.emailAddresses[0]?.emailAddress ?? "",
       imageUrl: user.imageUrl,
     });
 

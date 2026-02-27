@@ -161,6 +161,10 @@ interface Props {
 export default function MessageList({ conversationId, currentUserId, onReply }: Props) {
   const messages = useQuery(api.messages.getMessages, { conversationId });
   const markAsRead = useMutation(api.presence.markAsRead);
+  const typingUsers = useQuery(api.presence.getTypingUsers, {
+    conversationId,
+    currentUserId,
+  });
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -292,6 +296,32 @@ export default function MessageList({ conversationId, currentUserId, onReply }: 
             </div>
           );
         })}
+
+        {typingUsers && typingUsers.length > 0 && (
+          <div className="flex items-end gap-2 px-2 pb-2">
+            <div className="bg-[#202c33] text-[#00a884] rounded-2xl rounded-bl-none px-4 py-2.5 flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1">
+                <span
+                  className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <span
+                  className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="w-1.5 h-1.5 bg-[#00a884] rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </span>
+              <span className="text-[#aebac1]">
+                {typingUsers.length === 1
+                  ? `${typingUsers[0]?.name ?? "Someone"} is typing...`
+                  : `${typingUsers.length} people are typing...`}
+              </span>
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
