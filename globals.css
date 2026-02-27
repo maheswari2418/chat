@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Fix for full height */
+  html, body, #__next {
+    height: 100%;
+  }
+}
+
+/* Custom scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Prevent horizontal scroll */
+body {
+  overflow-x: hidden;
+}
+```
+
+---
+
+## Directory Structure Summary
+```
+app/
+├── (auth)/
+│   ├── sign-in/[[...sign-in]]/
+│   │   └── page.tsx                 ← Auth page
+│   └── sign-up/[[...sign-up]]/
+│       └── page.tsx                 ← Auth page
+├── (chat)/
+│   ├── layout.tsx                   ← "use client" - Chat layout with sidebar
+│   ├── page.tsx                     ← Empty state (desktop only)
+│   └── conversations/
+│       └── [conversationId]/
+│           └── page.tsx             ← Individual chat
+├── layout.tsx                       ← Root layout with providers
+└── globals.css
+
+components/
+├── chat/
+│   ├── sidebar/
+│   │   ├── conversation-list.tsx    ← With tabs: Chats | All Users
+│   │   ├── conversation-item.tsx
+│   │   ├── all-users-list.tsx       ← A-Z grouped user list
+│   │   └── user-search.tsx
+│   ├── message-area/
+│   │   ├── message-list.tsx
+│   │   ├── message-item.tsx         ← Handles system messages
+│   │   ├── message-input.tsx
+│   │   └── typing-indicator.tsx
+│   └── shared/
+│       ├── online-status.tsx
+│       ├── unread-badge.tsx
+│       ├── timestamp.tsx
+│       └── empty-state.tsx
+├── onboarding/
+│   ├── onboarding-checker.tsx
+│   └── user-setup.tsx
+├── providers/
+│   └── convex-clerk-provider.tsx
+└── ui/
+    └── index.tsx                    ← All UI components in one file
