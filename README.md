@@ -1,4 +1,4 @@
-# TarsChat (Next.js + Clerk + Convex)
+YoChat (Next.js + Clerk + Convex)
 
 Real-time chat application built with **Next.js App Router**, **Clerk authentication**, and **Convex** for realtime data (messages, presence, typing, read receipts).
 
@@ -14,7 +14,7 @@ Real-time chat application built with **Next.js App Router**, **Clerk authentica
 - **Replies**: Reply to a message with a preview context
 - **Reactions**: Toggle emoji reactions on messages
 - **Message deletion**: Soft delete (message remains, marked deleted)
-- **WhatsApp-like UI**: Sidebar + chat layout optimized for mobile/desktop
+- **Responsive UI**: Sidebar + chat layout optimized for mobile/desktop
 
 ## Tech Stack
 
@@ -160,11 +160,5 @@ Open `http://localhost:3000`.
 - **Convex queries failing**: ensure `NEXT_PUBLIC_CONVEX_URL` is correct and `npx convex dev` is running.
 - **Presence/typing not updating**: confirm the `presence` and `typingIndicators` tables exist (schema deployed) and browser console has no auth errors.
 
-## Security
 
-- Do not expose or commit secrets (e.g. `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`).
-- Use Clerk + Convex access control best practices for production environments.
 
-## License
-
-Add a license if you plan to open-source this repo.
