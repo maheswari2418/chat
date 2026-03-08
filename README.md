@@ -1,8 +1,11 @@
 YoChat (Next.js + Clerk + Convex)
 
-Real-time chat application built with **Next.js App Router**, **Clerk authentication**, and **Convex** for realtime data (messages, presence, typing, read receipts).
 
-## Features
+Real-time chat application built with **Next.js App Router**, **Clerk authentication**, and **Convex** for realtime data (messages, presence, typing, read receipts).<img width="1788" height="954" alt="Screenshot 2026-03-08 183946" src="https://github.com/user-attachments/assets/56e7e3f0-dec2-48dc-ae03-e6e571e597d2" />
+
+
+## Features<img width="1898" height="912" alt="Screenshot 2026-03-08 184317" src="https://github.com/user-attachments/assets/e8be9609-791e-45f8-9f7e-72534bb7e8da" />
+
 
 - **Auth**: Sign in / sign out via Clerk
 - **1:1 conversations**: Start a direct chat with any user
